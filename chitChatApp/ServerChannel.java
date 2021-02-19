@@ -81,12 +81,17 @@ public class ServerChannel {
                     System.out.println("Waiting for msg......");
                     String msg = inStream.readUTF();
 
-                    if(msg.startsWith("?")){
-                        ChitChatClient.displayMessage("Internet", msg.substring(1), Pos.CENTER  );
-                    }
-                    else{
-                        String []msgCode = msg.split(":");
+                    String []msgCode = msg.split(":");
                         switch (msgCode[0]){
+                            case "-1":
+                                ChitChatClient.displayMessage("Internet", msgCode[1]+" is offline :(", Pos.CENTER);
+                                break;
+
+                            case "-2":
+                                ChitChatClient.displayMessage("Internet", msgCode[1] + " is offline :(", Pos.CENTER);
+                                ChitChatClient.friends.remove(msgCode[1]);
+                                break;
+
                             case "0":   //message from friend
                                 ChitChatClient.displayMessage(msgCode[1], msgCode[2], Pos.CENTER_LEFT);
                                 break;
@@ -121,10 +126,12 @@ public class ServerChannel {
                                 }
                                 break;
 
+                            case "3":
+
+
                             default:
                                 System.out.println("Invalid Message!");
                         }
-                    }
                 }
                 catch (IOException e){
                     try{
