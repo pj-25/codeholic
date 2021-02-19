@@ -1,0 +1,14 @@
+.wait-window{
+    -fx-background-image: url("img/bg2.jpg");
+    -fx-background-size: cover;
+}
+
+.background-style{
+    -fx-background-image: url("img/bg1.jpg");
+    -fx-background-size: cover;
+}
+
+.popup-style{
+    -fx-background-radius: 50px;
+    -fx-background-color: rgba(0,0,0, 0.3);
+}
