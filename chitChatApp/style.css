@@ -1,0 +1,8 @@
+.scroll-pane .viewport {
+    -fx-background-image: url("chitChatbg.jpg");
+}
+
+.login-background{
+    -fx-background-image: url("believeInYourself.png");
+    -fx-background-size: cover;
+}
