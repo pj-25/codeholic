@@ -85,7 +85,7 @@ public class ServeClient extends Thread{
                            System.out.println(msgCode[1] + ":" + msgCode[2]);
                        }
                        else
-                           send("?" + msgCode[1] + " is Offline :(" );
+                           send("-1:" + msgCode[1]);
                        break;
 
                    case "1":
@@ -97,6 +97,8 @@ public class ServeClient extends Thread{
                            }
                            receiver.send(msgCode[0] + ":" + clientID + ":" + address + ":" + msgCode[2]);
                        }
+                       else
+                           send("-2:" + msgCode[1]);
                        break;
 
                    default:
