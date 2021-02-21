@@ -94,6 +94,9 @@ public class ServeClient extends Thread{
                            String address = getAddress();
                            if(address.equals(receiver.getAddress())){
                                address = getLocalAddress();
+                               if(address.equals(receiver.getLocalAddress())) {
+                                   address = "localhost";
+                               }
                            }
                            receiver.send(msgCode[0] + ":" + clientID + ":" + address + ":" + msgCode[2]);
                        }
