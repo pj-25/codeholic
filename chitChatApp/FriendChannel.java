@@ -1,7 +1,6 @@
-package chitChatApp;
+package chitChat.chitChatApp;
 
 import javafx.geometry.Pos;
-import javafx.scene.layout.Pane;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -15,20 +14,20 @@ public class FriendChannel {
     private DatagramPacket readerPacket;
     private DatagramSocket readerSocket;
     private final DatagramSocket writerSocket;
-    private DataInputStream dataInputStream;
-    private DataOutputStream dataOutputStream;
     private boolean isConnected = false;
+    private DataConsumer dataConsumer;
 
-    public FriendChannel(String friendName) throws IOException{
+    public FriendChannel(String friendName, DataConsumer dataConsumer) throws IOException{
         this.friendName = friendName;
         readerSocket = new DatagramSocket();
         writerSocket = new DatagramSocket();
         readerPacket = new DatagramPacket(new byte[256], 256);
         writerPacket = new DatagramPacket(new byte[256], 256);
+        this.dataConsumer = dataConsumer;
     }
 
-    public FriendChannel(String friendName, String connectionAddress, int port) throws IOException, ConnectException {
-        this(friendName);
+    public FriendChannel(String friendName, String connectionAddress, int port, DataConsumer dataConsumer) throws IOException, ConnectException {
+        this(friendName, dataConsumer);
         connect(connectionAddress, port);
     }
 
@@ -46,14 +45,6 @@ public class FriendChannel {
 
     public void setSocket(DatagramSocket socket){
         this.readerSocket = socket;
-    }
-
-    public DataInputStream getDataInputStream() {
-        return dataInputStream;
-    }
-
-    public void setDataInputStream(DataInputStream dataInputStream) {
-        this.dataInputStream = dataInputStream;
     }
 
     public void holePunch(){
@@ -109,11 +100,11 @@ public class FriendChannel {
                         switch (msgCode[0]){
                             case "0":
                                 close();
-                                ChitChatClient.displayMessage("Internet", friendName + " disconnected :(", Pos.CENTER);
+                                dataConsumer.consume("Internet", friendName + " disconnected :(", "CENTER");
                                 break;
 
                             case "1":
-                                ChitChatClient.displayMessage(friendName, msgCode[1], Pos.CENTER_LEFT);
+                                dataConsumer.consume(friendName, msgCode[1], "CENTER_LEFT");
                                 break;
 
                             default:
@@ -130,11 +121,6 @@ public class FriendChannel {
             throw new ConnectException();
     }
 
-    public String read() throws IOException, ConnectException{
-        if(isConnected)
-            return dataInputStream.readUTF();
-        throw new ConnectException();
-    }
 
     public void write(String msg) throws IOException{
         byte []msgBytes = msg.getBytes();

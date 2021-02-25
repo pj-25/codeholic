@@ -1,7 +1,6 @@
-package chitChatApp;
+package chitChat.chitChatApp;
 
 import javafx.geometry.Pos;
-import javafx.scene.layout.Pane;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -13,18 +12,27 @@ public class ServerChannel {
     private Socket socket = null;
     private DataInputStream inStream = null;
     private DataOutputStream outStream = null;
+    private DataConsumer dataConsumer;
 
     public static final int SERVER_PORT = 9898;
     public static final String SERVER_IP = "18.191.252.245"; //18.191.252.245
 
-
-    public ServerChannel(String name) throws IOException{
-        this(name, SERVER_IP, SERVER_PORT);
+    public ServerChannel(String name, DataConsumer dataConsumer) throws IOException{
+        this(name, SERVER_IP, SERVER_PORT, dataConsumer);
     }
 
-    public ServerChannel(String name, String serverIP, int port) throws IOException{
+    public ServerChannel(String name, String serverIP, int port, DataConsumer dataConsumer) throws IOException{
         this.name = name;
+        this.dataConsumer = dataConsumer;
         connect(serverIP, port);
+    }
+
+    public DataConsumer getDataConsumer() {
+        return dataConsumer;
+    }
+
+    public void setDataConsumer(DataConsumer dataConsumer) {
+        this.dataConsumer = dataConsumer;
     }
 
     public String getName() {
@@ -75,30 +83,30 @@ public class ServerChannel {
 
     public void run() {
         new Thread(()->{
-            FriendChannel friendChannel = null;
+            FriendChannel friendChannel;
             while(isRunning()){
                 try {
                     System.out.println("Waiting for msg......");
                     String msg = inStream.readUTF();
-
+                    System.out.println("Received message: " +msg);
                     String []msgCode = msg.split(":");
                         switch (msgCode[0]){
                             case "-1":
-                                ChitChatClient.displayMessage("Internet", msgCode[1]+" is offline :(", Pos.CENTER);
+                                dataConsumer.consume("Internet", msgCode[1]+" is offline :(", "CENTER");
                                 break;
 
                             case "-2":
-                                ChitChatClient.displayMessage("Internet", msgCode[1] + " is offline :(", Pos.CENTER);
+                                dataConsumer.consume("Internet", msgCode[1] + " is offline :(", "CENTER");
                                 ChitChatClient.friends.remove(msgCode[1]);
                                 break;
 
                             case "0":   //message from friend
-                                ChitChatClient.displayMessage(msgCode[1], msgCode[2], Pos.CENTER_LEFT);
+                                dataConsumer.consume(msgCode[1], msgCode[2], "CENTER_LEFT");
                                 break;
 
                             case "1":   //receiving connection request
                                 try {
-                                    friendChannel = new FriendChannel(msgCode[1], msgCode[2], Integer.parseInt(msgCode[3]));
+                                    friendChannel = new FriendChannel(msgCode[1], msgCode[2], Integer.parseInt(msgCode[3]), dataConsumer);
 
                                     String joinRequest = "2:" + msgCode[1] + ":" + friendChannel.getPort();
                                     send(joinRequest);
@@ -148,7 +156,7 @@ public class ServerChannel {
 
     public void send(String msg) throws IOException{
         outStream.writeUTF(msg);
-        System.out.println("Sent msg:" + msg);
+        System.out.println("Sent msg >>" + msg);
     }
 
     public void close() throws IOException{

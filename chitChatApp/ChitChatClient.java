@@ -1,4 +1,4 @@
-package chitChatApp;
+package chitChat.chitChatApp;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -29,16 +29,14 @@ public class ChitChatClient extends Application {
     private String name;
     private ServerChannel socketHandler;
     private Stage primaryStage;
-
-    static VBox displayPane;
-    static ScrollPane scrollWindow = null;
+    private MessageConsumer msgConsumer;
 
     public static Map<String, FriendChannel> friends = new HashMap<String, FriendChannel>();
 
     public ChitChatClient() {}
 
     public void connectTo(String friendID) throws IOException{
-        FriendChannel friendChannel = new FriendChannel(friendID);
+        FriendChannel friendChannel = new FriendChannel(friendID, msgConsumer);
         String connectionRequest = "1:" + friendID + ":" + friendChannel.getPort();
         socketHandler.send(connectionRequest);
         System.out.println("Connection request sent to " + friendID);
@@ -64,20 +62,22 @@ public class ChitChatClient extends Application {
     }
 
     public void connect() throws IOException{
-        socketHandler = new ServerChannel(name);
+        socketHandler = new ServerChannel(name, msgConsumer);
         socketHandler.run();
     }
 
     public void openChatBox() throws IOException{
         ScrollPane scrollPane = new ScrollPane();
 
-        displayPane = new VBox();
+        VBox displayPane = new VBox();
         displayPane.setSpacing(10);
 
         scrollPane.setContent(displayPane);
         scrollPane.setFitToWidth(true);
         scrollPane.setPrefViewportHeight(580);
-        scrollWindow = scrollPane;
+
+        msgConsumer = new MessageConsumer(scrollPane, displayPane);
+        connect();
 
         TextField receiverName = new TextField();
         receiverName.setPromptText("To");
@@ -92,10 +92,10 @@ public class ChitChatClient extends Application {
             if(!receiverName.getText().isEmpty() && !msgBox.getText().isEmpty()) {
                 try {
                     sendTo(receiverName.getText(), msgBox.getText());
-                    displayMessage("To-> " + receiverName.getText(), msgBox.getText(), displayPane, Pos.CENTER_RIGHT);
+                    msgConsumer.displayMessage("To-> " + receiverName.getText(), msgBox.getText(), Pos.CENTER_RIGHT);
                 }
                 catch (IOException ioe){
-                    displayMessage("Internet", "Server disconnected :(", displayPane, Pos.CENTER);
+                    msgConsumer.displayMessage("Internet", "Server disconnected :(", Pos.CENTER);
                 }
             }
         });
@@ -126,7 +126,7 @@ public class ChitChatClient extends Application {
         VBox mainPane = new VBox(scrollPane, msgPane, connectPane);
 
         Scene scene = new Scene(mainPane);
-        scene.getStylesheets().add("chitChatApp/style.css");
+        scene.getStylesheets().add("chitChat/chitChatApp/style.css");
 
         primaryStage.setOnCloseRequest(e->{
             try {
@@ -139,14 +139,12 @@ public class ChitChatClient extends Application {
         primaryStage.setMaximized(false);
         primaryStage.setScene(scene);
         primaryStage.setTitle("ChitChat:" + name);
-        primaryStage.setOnCloseRequest(e->{
-            close();
-        });
+        primaryStage.setOnCloseRequest(e->close());
         //primaryStage.setResizable(false);
     }
 
     @Override
-    public void start(Stage primaryStage) throws IOException{
+    public void start(Stage primaryStage){
         Label loginLbl = new Label("LOGIN");
         loginLbl.setFont(Font.font("Monospace", FontWeight.EXTRA_BOLD, 40));
         Label userIdLbl = new Label("User ID");
@@ -160,9 +158,9 @@ public class ChitChatClient extends Application {
             try {
                 if(!userIdField.getText().isEmpty()) {
                     name = userIdField.getText();
-                    connect();
                     System.out.println("Connected Successfully!");
                     openChatBox();
+
                 }
                 else{
                     popupMsg("Please enter valid userID!");
@@ -178,7 +176,7 @@ public class ChitChatClient extends Application {
         vpane.setAlignment(Pos.CENTER);
         vpane.getStyleClass().add("login-background");
         Scene scene = new Scene(vpane, 600, 400);
-        scene.getStylesheets().add("chitChatApp/style.css");
+        scene.getStylesheets().add("chitChat/chitChatApp/style.css");
 
         primaryStage.setTitle("ChitChat");
         primaryStage.setScene(scene);
@@ -188,29 +186,6 @@ public class ChitChatClient extends Application {
         primaryStage.show();
     }
 
-    static void displayMessage(String from, String msg, Pos pos){
-        displayMessage(from, msg, displayPane, pos);
-    }
-
-    static void displayMessage(String from, String msg, Pane displayPane, Pos pos){
-        Label nameLbl = new Label(from + ":");
-        nameLbl.setTextFill(Color.GREEN);
-        Label msgLbl = new Label(msg);
-        msgLbl.setTextFill(Color.WHITE);
-
-
-        VBox msgPane = new VBox(nameLbl, msgLbl);
-        msgLbl.setMinWidth(100);
-        msgLbl.setAlignment(pos);
-        msgPane.setPadding(new Insets(20));
-        msgPane.setStyle("-fx-background-color: rgba(0,0,0, 0.2);");
-        msgPane.setAlignment(pos);
-
-        Platform.runLater(() -> {                               //**********
-            displayPane.getChildren().add(msgPane);
-            scrollWindow.setVvalue(1.0);
-        });
-    }
 
     void close(){
         try{
@@ -243,7 +218,7 @@ public class ChitChatClient extends Application {
     }
 
 
-    public static void main(String []s) throws IOException{
+    public static void main(String []s) {
         launch(s);
     }
 }
