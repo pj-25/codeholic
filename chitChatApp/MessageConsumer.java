@@ -56,7 +56,6 @@ public class MessageConsumer implements DataConsumer{
 
     @Override
     public void consume(String ...data){
-        System.out.println("----");
         displayMessage(data[0], data[1], Pos.valueOf(data[2]));
     }
 }
