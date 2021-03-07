@@ -43,11 +43,13 @@ public class DownloadChitChat extends Application {
                     }
                     else{
                         resume();
+                        status.setText("Download is in progress...");
                     }
                     downloadBtn.setText("Pause");
                 }
                 else if(btnStatus.equals("Pause")){
                     downloadBtn.setText("Resume");
+                    status.setText("Download paused!");
                     isPaused = true;
                 }
                 else{
@@ -59,9 +61,15 @@ public class DownloadChitChat extends Application {
             }
         });
         Label fileType = new Label("Linux/Ubuntu (15.3MB)");
+        fileType.setStyle("-fx-background-color: rgba(0,0,0,0.2);");
+        fileType.setPadding(new Insets(20));
         status = new Label("Click above to download");
+        //status.setStyle("-fx-background-color: rgba(0,0,0, 0.2);");
+        status.setTextFill(Color.WHITE);
+        status.setPadding(new Insets(20));
+        status.setAlignment(Pos.BASELINE_CENTER);
         fileType.setFont(Font.font("Monospace", FontWeight.EXTRA_BOLD, 20));
-        fileType.setTextFill(Color.GREEN);
+        fileType.setTextFill(Color.NAVAJOWHITE);
 
         progressBar.setMinWidth(400);
 
@@ -82,7 +90,7 @@ public class DownloadChitChat extends Application {
         primaryStage.show();
     }
 
-    public float getFileSize(){
+    public float getFileSize() throws IOException{
         URLConnection urlConnection = null;
         try{
             URL url = new URL(DOWNLOAD_LINK);
@@ -92,7 +100,7 @@ public class DownloadChitChat extends Application {
             return urlConnection.getContentLength();
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new IOException(e);
         }
         finally {
             if(urlConnection!=null)
@@ -128,7 +136,7 @@ public class DownloadChitChat extends Application {
         InputStream inStream = urlConnection.getInputStream();
         FileOutputStream fout = new FileOutputStream("chitChatApp.jar");
 
-        status.setText("Download in progress...");
+        status.setText("Download is in progress...");
 
         new Thread(()->{
             try{
