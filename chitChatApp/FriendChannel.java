@@ -1,9 +1,5 @@
 package chitChat.chitChatApp;
 
-import javafx.geometry.Pos;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.*;
 
@@ -142,7 +138,7 @@ public class FriendChannel {
         sendCloseRequest();
         readerSocket.close();
         writerSocket.close();
-        ChitChatClient.disconnect(friendName);
+        NetworkConnection.disconnectWith(friendName);
         isConnected = false;
     }
 

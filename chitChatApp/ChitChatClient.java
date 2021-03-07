@@ -27,44 +27,10 @@ import javafx.stage.Stage;
 public class ChitChatClient extends Application {
 
     private String name;
-    private ServerChannel socketHandler;
     private Stage primaryStage;
-    private MessageConsumer msgConsumer;
-
-    public static Map<String, FriendChannel> friends = new HashMap<String, FriendChannel>();
+    private NetworkConnection networkConnection;
 
     public ChitChatClient() {}
-
-    public void connectTo(String friendID) throws IOException{
-        FriendChannel friendChannel = new FriendChannel(friendID, msgConsumer);
-        String connectionRequest = "1:" + friendID + ":" + friendChannel.getPort();
-        socketHandler.send(connectionRequest);
-        System.out.println("Connection request sent to " + friendID);
-        friends.put(friendID, friendChannel);
-    }
-
-    public void sendTo(String name, String msg) throws IOException{
-        FriendChannel friendChannel = friends.get(name);
-        if(friendChannel!=null){
-            try{
-                friendChannel.writeMessage(msg);
-            }
-            catch (IOException e){
-                System.out.println("Enable to send msg to "+name);
-            }
-        }
-        else
-            socketHandler.send("0:" + name + ":" + msg);
-    }
-
-    static public void disconnect(String friendID){
-        friends.remove(friendID);
-    }
-
-    public void connect() throws IOException{
-        socketHandler = new ServerChannel(name, msgConsumer);
-        socketHandler.run();
-    }
 
     public void openChatBox() throws IOException{
         ScrollPane scrollPane = new ScrollPane();
@@ -76,8 +42,10 @@ public class ChitChatClient extends Application {
         scrollPane.setFitToWidth(true);
         scrollPane.setPrefViewportHeight(580);
 
-        msgConsumer = new MessageConsumer(scrollPane, displayPane);
-        connect();
+        //setup network connection
+        MessageConsumer msgConsumer = new MessageConsumer(scrollPane, displayPane);
+        networkConnection = new NetworkConnection(name, msgConsumer);
+        networkConnection.connect();
 
         TextField receiverName = new TextField();
         receiverName.setPromptText("To");
@@ -91,7 +59,7 @@ public class ChitChatClient extends Application {
         sendBtn.setOnAction(e->{
             if(!receiverName.getText().isEmpty() && !msgBox.getText().isEmpty()) {
                 try {
-                    sendTo(receiverName.getText(), msgBox.getText());
+                    networkConnection.sendTo(receiverName.getText(), msgBox.getText());
                     msgConsumer.displayMessage("To-> " + receiverName.getText(), msgBox.getText(), Pos.CENTER_RIGHT);
                 }
                 catch (IOException ioe){
@@ -110,7 +78,7 @@ public class ChitChatClient extends Application {
         connectBtn.setOnAction(e->{
             if(!friendName.getText().isEmpty()){
                 try{
-                    connectTo(friendName.getText());
+                    networkConnection.connectTo(friendName.getText());
                 }
                 catch (IOException x){
                     popupMsg("Unable to connect to " + friendName);
@@ -130,7 +98,7 @@ public class ChitChatClient extends Application {
 
         primaryStage.setOnCloseRequest(e->{
             try {
-                socketHandler.close();
+                networkConnection.close();
             } catch (IOException ioException) {
                 ioException.printStackTrace();
             }
@@ -139,7 +107,6 @@ public class ChitChatClient extends Application {
         primaryStage.setMaximized(false);
         primaryStage.setScene(scene);
         primaryStage.setTitle("ChitChat:" + name);
-        primaryStage.setOnCloseRequest(e->close());
         //primaryStage.setResizable(false);
     }
 
@@ -186,21 +153,6 @@ public class ChitChatClient extends Application {
         primaryStage.show();
     }
 
-
-    void close(){
-        try{
-            if(socketHandler!=null)
-                socketHandler.close();
-            for(FriendChannel friendChannel: friends.values()){
-                System.out.println( friendChannel.getFriendName() + " is disconnecting.....");
-                friendChannel.close();
-            }
-            friends = null;
-        }
-        catch (IOException e){
-            e.printStackTrace();
-        }
-    }
 
     void popupMsg(String msg){
         Popup popup = new Popup();

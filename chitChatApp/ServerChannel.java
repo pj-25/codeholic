@@ -83,63 +83,12 @@ public class ServerChannel {
 
     public void run() {
         new Thread(()->{
-            FriendChannel friendChannel;
             while(isRunning()){
                 try {
                     System.out.println("Waiting for msg......");
                     String msg = inStream.readUTF();
                     System.out.println("Received message: " +msg);
-                    String []msgCode = msg.split(":");
-                        switch (msgCode[0]){
-                            case "-1":
-                                dataConsumer.consume("Internet", msgCode[1]+" is offline :(", "CENTER");
-                                break;
-
-                            case "-2":
-                                dataConsumer.consume("Internet", msgCode[1] + " is offline :(", "CENTER");
-                                ChitChatClient.friends.remove(msgCode[1]);
-                                break;
-
-                            case "0":   //message from friend
-                                dataConsumer.consume(msgCode[1], msgCode[2], "CENTER_LEFT");
-                                break;
-
-                            case "1":   //receiving connection request
-                                try {
-                                    friendChannel = new FriendChannel(msgCode[1], msgCode[2], Integer.parseInt(msgCode[3]), dataConsumer);
-
-                                    String joinRequest = "2:" + msgCode[1] + ":" + friendChannel.getPort();
-                                    send(joinRequest);
-
-                                    ChitChatClient.friends.put(msgCode[1], friendChannel);
-                                    System.out.println(msgCode[1] + " connected successfully!");
-                                }
-                                catch (FriendChannel.ConnectException | IOException c){
-                                    c.printStackTrace();
-                                }
-                                break;
-
-                            case "2":     //receiving response of sent connection request
-                                friendChannel = ChitChatClient.friends.get(msgCode[1]);
-                                if(friendChannel != null) {
-                                    try {
-                                        friendChannel.connect(msgCode[2], Integer.parseInt(msgCode[3]));
-                                        System.out.println(msgCode[1] + " accepted your connection request!");
-                                    }
-                                    catch (FriendChannel.ConnectException c){
-                                        c.printStackTrace();
-                                    }
-                                }else{
-                                    System.out.println("Invalid message: " + msg);
-                                }
-                                break;
-
-                            case "3":
-
-
-                            default:
-                                System.out.println("Invalid Message!");
-                        }
+                    dataConsumer.consume(msg);
                 }
                 catch (IOException e){
                     try{
